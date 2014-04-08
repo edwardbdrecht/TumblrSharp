@@ -1,6 +1,7 @@
 ﻿using DontPanic.TumblrSharp.OAuth;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -1427,19 +1428,13 @@ namespace DontPanic.TumblrSharp.Client
 			if (count < 1 || count > 20)
 				throw new ArgumentOutOfRangeException("count", "count must be between 1 and 20.");
 
-			MethodParameterSet parameters = new MethodParameterSet();
-			if (OAuthToken == null)
-				parameters.Add("api_key", apiKey);
+            MethodParameterSet parameters = new MethodParameterSet();
+            parameters.Add("api_key", apiKey);
+            parameters.Add("tag", tag);
 
-			parameters.Add("tag", tag);
-			parameters.Add("before", DateTimeHelper.ToTimestamp(before));
-			parameters.Add("limit", count, 20);
-			parameters.Add("filter", filter.ToString().ToLowerInvariant(), "html");
-
-			return CallApiMethodAsync<BasePost[]>(
-				new UserMethod("tagged", OAuthToken, HttpMethod.Get, parameters),
-				CancellationToken.None,
-				new JsonConverter[] { new PostArrayConverter() });
+            return CallApiMethodAsync<BasePost[]>(
+                new ApiMethod("http://api.tumblr.com/v2/tagged", OAuthToken, HttpMethod.Get, parameters),
+                CancellationToken.None, new List<JsonConverter>() { new PostArrayConverter() });
 		}
 
 		#endregion
@@ -1516,25 +1511,38 @@ namespace DontPanic.TumblrSharp.Client
 			if (OAuthToken == null)
 				throw new InvalidOperationException("GetDashboardPostsAsync method requires an OAuth token to be specified.");
 
-			MethodParameterSet parameters = new MethodParameterSet();
-			parameters.Add("type", type.ToString().ToLowerInvariant());
-			parameters.Add("since_id", sinceId, 0);
-			parameters.Add("offset", startIndex, 0);
-			parameters.Add("limit", count, 20);
-			parameters.Add("reblog_info", includeReblogInfo, false);
-			parameters.Add("notes_info", includeNotesInfo, false);
+            MethodParameterSet parameters = new MethodParameterSet();
+            parameters.Add("since_id", sinceId, 0);
+            parameters.Add("offset", startIndex, 0);
+            parameters.Add("limit", count, 20);
+            parameters.Add("reblog_info", includeReblogInfo, false);
+            parameters.Add("notes_info", includeNotesInfo, false);
 
-			return CallApiMethodAsync<PostCollection, BasePost[]>(
-				new UserMethod("dashboard", OAuthToken, HttpMethod.Get, parameters),
-				r => r.Posts,
-				CancellationToken.None);
+            return CallApiMethodAsync<PostCollection, BasePost[]>(
+                new UserMethod("dashboard", OAuthToken, HttpMethod.Get, parameters),
+                r => r.Posts,
+                CancellationToken.None);
 		}
 
 		#endregion
 
-		#region GetUserLikesAsync
+        #region GetTagDiscovery
 
-		/// <summary>
+        public Task<TagDiscoveryInfo> GetTagDiscovery(Token OAuthToken)
+        {
+            MethodParameterSet parameters = new MethodParameterSet();
+            parameters.Add("api_key", apiKey);
+
+            return CallApiMethodAsync<TagDiscoveryInfo>(
+                new ApiMethod("http://api.tumblr.com/v2/tag_discovery", OAuthToken, HttpMethod.Get, parameters),
+                CancellationToken.None);
+        }
+
+        #endregion
+
+        #region GetUserLikesAsync
+
+        /// <summary>
 		/// Asynchronously retrieves the current user's likes.
 		/// </summary>
 		/// <remarks>

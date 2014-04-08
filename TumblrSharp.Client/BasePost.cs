@@ -107,5 +107,8 @@ namespace DontPanic.TumblrSharp.Client
 		/// </summary>
 		[JsonProperty(PropertyName = "bookmarklet")]
 		public string IsBookmarklet { get; set; }
+
+        [JsonProperty(PropertyName = "notes")]
+        public Note[] Notes { get; set; }
 	}
 }
